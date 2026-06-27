@@ -16,10 +16,13 @@ import scot.oskar.jing.command.ReplyCommand
 import scot.oskar.jing.component.PrivateMessageComponent
 import scot.oskar.jing.config.JingPluginConfiguration
 import scot.oskar.jing.config.JingPluginConfigurationCodec
+import scot.oskar.jing.config.lang.I18n
+import scot.oskar.jing.config.lang.I18nService
 import scot.oskar.jing.data.JingPlayerData
 import scot.oskar.jing.data.PlayerId
 import scot.oskar.jing.data.storage.JingPlayerDataProvider.Companion.registerDataProvider
 import scot.oskar.jing.data.storage.SimplePlayerDataProvider
+import scot.oskar.jing.ext.sendMessage
 
 class JingPlugin(init: JavaPluginInit): JavaPlugin(init) {
 
@@ -28,6 +31,7 @@ class JingPlugin(init: JavaPluginInit): JavaPlugin(init) {
     }
 
     private val pluginConfig: Config<JingPluginConfiguration>
+    private val i18nService =  I18nService(dataDirectory)
 
     init {
         SimplePlayerDataProvider.basePath = dataDirectory
@@ -52,11 +56,18 @@ class JingPlugin(init: JavaPluginInit): JavaPlugin(init) {
                 }
                 event.playerRef.sendMessage(Message.raw("Stored UUID: ${saved.test}"))
             }
+
+            event.playerRef.sendMessage("message.welcome", "username" to event.playerRef.username)
+            event.playerRef.sendMessage("message.invalid", "username" to event.playerRef.username)
         }
     }
 
     override fun setup() {
         logger.atInfo().log("Using ${pluginConfig.get().storageProvider::class.simpleName} as storage provider.")
+
+        i18nService.ensureDefaults()
+        i18nService.loadAll()
+        I18n.init(i18nService)
 
         registerComponents()
         registerEvents()
@@ -74,7 +85,6 @@ class JingPlugin(init: JavaPluginInit): JavaPlugin(init) {
 
     fun registerCommands(vararg commands: AbstractCommand) =
         commands.forEach { commandRegistry.registerCommand(it) }
-
 
     /**
      *  Fancy typed helper function for registering a non-serializable [Component] for the provided ECS Store type

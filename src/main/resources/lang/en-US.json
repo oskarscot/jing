@@ -1,0 +1,15 @@
+{
+  "Messages": {
+    "message.welcome": {
+      "Children": [
+        {
+          "RawText": "Hello ",
+          "Color": "#58B875"
+        },
+        {
+          "RawText": "{username}"
+        }
+      ]
+    }
+  }
+}
