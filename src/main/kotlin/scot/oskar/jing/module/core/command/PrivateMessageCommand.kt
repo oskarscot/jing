@@ -1,4 +1,4 @@
-package scot.oskar.jing.command
+package scot.oskar.jing.module.core.command
 
 import com.hypixel.hytale.component.Ref
 import com.hypixel.hytale.component.Store

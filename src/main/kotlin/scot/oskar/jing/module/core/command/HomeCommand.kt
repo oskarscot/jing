@@ -1,4 +1,4 @@
-package scot.oskar.jing.command
+package scot.oskar.jing.module.core.command
 
 import com.hypixel.hytale.component.Ref
 import com.hypixel.hytale.component.Store
@@ -10,7 +10,11 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore
 
 class HomeCommand: AbstractPlayerCommand("home", "Teleport to your home") {
 
-    override fun execute(context: CommandContext, store: Store<EntityStore>, ref: Ref<EntityStore>, playerRef: PlayerRef, world: World
+    override fun execute(
+        context: CommandContext,
+        store: Store<EntityStore>,
+        ref: Ref<EntityStore>, player:
+        PlayerRef, world: World
     ) {
         TODO("Not yet implemented")
     }

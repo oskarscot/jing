@@ -5,6 +5,7 @@ import com.hypixel.hytale.logger.HytaleLogger
 import com.hypixel.hytale.server.core.plugin.PluginBase
 import com.hypixel.hytale.server.core.util.BsonUtil
 import org.bson.BsonValue
+import scot.oskar.jing.JingPlugin
 import scot.oskar.jing.config.lang.I18nLangFile
 import scot.oskar.jing.data.repository.CodecRepository
 import java.nio.file.Files
@@ -20,8 +21,8 @@ import kotlin.io.path.walk
 
 class I18nService private constructor (basePath: Path): CodecRepository<I18nLangFile> {
 
-    companion object Factory: HytaleAbstractServiceFactory<I18nService>() {
-        override fun create(plugin: PluginBase): I18nService = I18nService(plugin.dataDirectory)
+    companion object Factory: AbstractHytaleServiceFactory<I18nService>() {
+        override fun create(plugin: JingPlugin): I18nService = I18nService(plugin.dataDirectory)
     }
 
     private val defaultTag = "en-US"
