@@ -21,7 +21,6 @@ class ReplyCommand : AbstractPlayerCommand("reply", "Replies to the message") {
         addAliases("r")
     }
 
-    //TODO: i18n for the messages along with message templating
     override fun execute(context: CommandContext, store: Store<EntityStore>, ref: Ref<EntityStore>, player: PlayerRef, world: World) {
         val message = context.get(messageArg)
         val senderComponent = store.ensureAndGetComponent(ref, PrivateMessageComponent.COMPONENT_TYPE)

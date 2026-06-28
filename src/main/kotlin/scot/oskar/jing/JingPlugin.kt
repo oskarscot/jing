@@ -49,12 +49,11 @@ class JingPlugin(init: JavaPluginInit): JavaPlugin(init) {
         eventRegistry.registerGlobal(PlayerConnectEvent::class.java) { event ->
             val player = event.playerRef
             SCOPE.launch {
-                val saved = pluginConfig.get().storageProvider.getOrCreate(PlayerId(player.uuid)) {
+                pluginConfig.get().storageProvider.getOrCreate(PlayerId(player.uuid)) {
                     logger.atInfo().log("Registering new player: ${PlayerId(player.uuid)}")
                     event.playerRef.sendMessage(Message.raw("Welcome for the first time!"))
-                    JingPlayerData(player.uuid.toString())
+                    JingPlayerData()
                 }
-                event.playerRef.sendMessage(Message.raw("Stored UUID: ${saved.test}"))
             }
 
             player.sendMessage("message.welcome", "username" to player.username)
