@@ -47,18 +47,18 @@ class JingPlugin(init: JavaPluginInit): JavaPlugin(init) {
 
     fun registerEvents() {
         eventRegistry.registerGlobal(PlayerConnectEvent::class.java) { event ->
-            val uuid = event.playerRef.uuid
+            val player = event.playerRef
             SCOPE.launch {
-                val saved = pluginConfig.get().storageProvider.getOrCreate(PlayerId(uuid)) {
-                    logger.atInfo().log("Registering new player: ${PlayerId(uuid)}")
+                val saved = pluginConfig.get().storageProvider.getOrCreate(PlayerId(player.uuid)) {
+                    logger.atInfo().log("Registering new player: ${PlayerId(player.uuid)}")
                     event.playerRef.sendMessage(Message.raw("Welcome for the first time!"))
-                    JingPlayerData(uuid.toString())
+                    JingPlayerData(player.uuid.toString())
                 }
                 event.playerRef.sendMessage(Message.raw("Stored UUID: ${saved.test}"))
             }
 
-            event.playerRef.sendMessage("message.welcome", "username" to event.playerRef.username)
-            event.playerRef.sendMessage("message.invalid", "username" to event.playerRef.username)
+            player.sendMessage("message.welcome", "username" to player.username)
+            player.sendMessage("message.invalid", "username" to player.username)
         }
     }
 

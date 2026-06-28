@@ -10,6 +10,34 @@
           "RawText": "{username}"
         }
       ]
+    },
+    "message.pm.targetMessage": {
+      "Children": [
+        {
+          "RawText": "{username} -> You: {message}"
+        }
+      ]
+    },
+    "message.pm.senderMessage": {
+      "Children": [
+        {
+          "RawText": "You -> {username}: {message}"
+        }
+      ]
+    },
+    "message.pm.noTarget": {
+      "Children": [
+        {
+          "RawText": "You don't have anyone to reply to."
+        }
+      ]
+    },
+    "message.error.playerOffline": {
+      "Children": [
+        {
+          "RawText": "You don't have anyone to reply to."
+        }
+      ]
     }
   }
 }

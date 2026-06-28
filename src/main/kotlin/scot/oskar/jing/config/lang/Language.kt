@@ -20,7 +20,7 @@ import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.walk
 
-class I18nService(basePath: Path) {
+class I18nService (basePath: Path) {
 
     private companion object {
         const val DEFAULT_TAG = "en-US"
