@@ -17,7 +17,7 @@ import scot.oskar.jing.component.PrivateMessageComponent
 import scot.oskar.jing.config.JingPluginConfiguration
 import scot.oskar.jing.config.JingPluginConfigurationCodec
 import scot.oskar.jing.config.lang.I18n
-import scot.oskar.jing.config.lang.I18nService
+import scot.oskar.jing.data.I18nService
 import scot.oskar.jing.data.JingPlayerData
 import scot.oskar.jing.data.PlayerId
 import scot.oskar.jing.data.storage.JingPlayerDataProvider.Companion.registerDataProvider
@@ -31,7 +31,7 @@ class JingPlugin(init: JavaPluginInit): JavaPlugin(init) {
     }
 
     private val pluginConfig: Config<JingPluginConfiguration>
-    private val i18nService =  I18nService(dataDirectory)
+    private val i18nService = I18nService.create(this)
 
     init {
         SimplePlayerDataProvider.basePath = dataDirectory
@@ -64,7 +64,7 @@ class JingPlugin(init: JavaPluginInit): JavaPlugin(init) {
     override fun setup() {
         logger.atInfo().log("Using ${pluginConfig.get().storageProvider::class.simpleName} as storage provider.")
 
-        i18nService.load()
+        i18nService.loadAll()
         I18n.init(i18nService)
 
         registerComponents()
