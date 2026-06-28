@@ -65,8 +65,7 @@ class JingPlugin(init: JavaPluginInit): JavaPlugin(init) {
     override fun setup() {
         logger.atInfo().log("Using ${pluginConfig.get().storageProvider::class.simpleName} as storage provider.")
 
-        i18nService.ensureDefaults()
-        i18nService.loadAll()
+        i18nService.load()
         I18n.init(i18nService)
 
         registerComponents()

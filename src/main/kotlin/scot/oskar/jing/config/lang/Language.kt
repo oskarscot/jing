@@ -1,5 +1,6 @@
 package scot.oskar.jing.config.lang
 
+import com.hypixel.hytale.codec.Codec
 import com.hypixel.hytale.codec.ExtraInfo
 import com.hypixel.hytale.codec.KeyedCodec
 import com.hypixel.hytale.codec.builder.BuilderCodec
@@ -12,92 +13,114 @@ import scot.oskar.jing.ext.replace
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.walk
 
-//TODO: Clean this up so it's less ugly
 class I18nService(basePath: Path) {
 
-    private var langMap = mutableMapOf<Locale, I18nLangFile>()
+    private companion object {
+        const val DEFAULT_TAG = "en-US"
+        val DEFAULT_LOCALE: Locale = Locale.forLanguageTag(DEFAULT_TAG)
+        val BUNDLED_LOCALES = listOf(DEFAULT_TAG)
+    }
 
-    val logger = HytaleLogger.forEnclosingClass()
-    val langDir: Path = basePath.resolve("lang")
+    private val logger = HytaleLogger.forEnclosingClass()
+    private val langDir: Path = basePath.resolve("lang")
+    private val langMap = ConcurrentHashMap<Locale, I18nLangFile>()
 
-    // TODO: Not sure if I like this but you cant exactly traverse resources in a jar
-    val bundledLocales = listOf(
-        "en-US"
-    )
-
-    fun ensureDefaults() {
-        Files.createDirectories(langDir)
-        for (locale in bundledLocales) {
-            val target = langDir.resolve("$locale.json")
-            if (Files.notExists(target)) {
-                javaClass.getResourceAsStream("/lang/$locale.json")?.use { stream ->
-                    Files.copy(stream, target)
-                    logger.atInfo().log("Initialising default translation file: $locale.json")
-                } ?: logger.atWarning().log("Bundled lang resource missing: /lang/$locale.json")
+    fun load(): CompletableFuture<Void> {
+        ensureDefaults()
+        return loadAll().thenRun {
+            if (!langMap.containsKey(Locale.forLanguageTag(DEFAULT_TAG))) {
+                logger.atSevere()
+                    .log("Default locale $DEFAULT_TAG failed to load; messages will fall back to raw keys")
             }
         }
     }
 
-    fun loadAll() {
-        langDir.walk()
-            .filter { it.isRegularFile() }
-            .filter { it.name.endsWith(".json") }
-            .filter { Locale.forLanguageTag(it.nameWithoutExtension).language.isNotEmpty() }
-            .forEach { file ->
-                logger.atInfo().log("Loading file: ${file.name}")
+    private fun ensureDefaults() {
+        Files.createDirectories(langDir)
+        for (tag in BUNDLED_LOCALES) {
+            val target = langDir.resolve("$tag.json")
+            if (Files.exists(target)) continue
 
-                BsonUtil.readDocument(file).thenAccept {
-                    val decoded = I18nLangFile.CODEC.decode(it, ExtraInfo.THREAD_LOCAL.get())?: run {
-                        return@thenAccept logger.atSevere().log("Failed to decode file: ${file.name}")
+            val resource = javaClass.getResourceAsStream("/lang/$tag.json")
+            if (resource == null) {
+                logger.atWarning().log("Bundled lang resource missing: /lang/$tag.json")
+                continue
+            }
+            resource.use { Files.copy(it, target) }
+            logger.atInfo().log("Initialising default translation file: $tag.json")
+        }
+    }
+
+    private fun loadAll(): CompletableFuture<Void> {
+        val futures = langDir.walk()
+            .filter { it.isRegularFile() && it.name.endsWith(".json") }
+            .mapNotNull { file ->
+                val locale = Locale.forLanguageTag(file.nameWithoutExtension)
+                if (locale.language.isEmpty()) {
+                    logger.atWarning().log("Skipping file with unparseable locale: ${file.name}")
+                    return@mapNotNull null
+                }
+                logger.atInfo().log("Loading lang file: ${file.name}")
+                BsonUtil.readDocument(file).thenAccept { doc ->
+                    val decoded = I18nLangFile.CODEC.decode(doc, ExtraInfo.THREAD_LOCAL.get())
+                    if (decoded == null) {
+                        logger.atSevere().log("Failed to decode file: ${file.name}")
+                    } else {
+                        langMap[locale] = decoded
+                        logger.atInfo().log("Registered translation file for locale: $locale")
                     }
-                    registerFile(Locale.forLanguageTag(file.nameWithoutExtension), decoded)
                 }
             }
+            .toList()
+        return CompletableFuture.allOf(*futures.toTypedArray())
     }
 
-    private fun registerFile(locale: Locale, file: I18nLangFile) {
-        logger.atInfo().log("Registered translation file for locale: $locale")
-        langMap[locale] = file
-    }
-
-    fun sendMessage(player: PlayerRef, messageKey: String, vararg placeholders: Pair<String, String>) {
-        val langFile = getLanguageForLocale(player.language) ?: getLanguageForLocale("en-US")!!
-        val message = langFile.messageMap[messageKey] ?: Message.raw("Invalid message: $messageKey")
-        player.sendMessage(message.replace(*placeholders))
-    }
-
-    fun getLanguageForLocale(locale: String): I18nLangFile? {
-        val locale = Locale.forLanguageTag(locale)
-        return langMap[locale]
-    }
-
+    fun resolve(languageTag: String): I18nLangFile? =
+        langMap[Locale.forLanguageTag(languageTag)] ?: langMap[DEFAULT_LOCALE]
 }
 
 object I18n {
+
     private lateinit var service: I18nService
+
     fun init(service: I18nService) { this.service = service }
 
-    fun sendMessage(player: PlayerRef, key: String, vararg placeholders: Pair<String, String>) =
-        service.sendMessage(player, key, *placeholders)
+    fun sendMessage(player: PlayerRef, key: String, vararg placeholders: Pair<String, String>) {
+        val message = service.resolve(player.language)?.messageMap?.get(key)
+            ?: Message.raw("Invalid message: $key")
+        player.sendMessage(message.replace(*placeholders))
+    }
+
+    fun getValue(player: PlayerRef, key: String): String =
+        service.resolve(player.language)?.valueMap?.get(key)
+            ?: "Missing value: $key"
 }
 
 class I18nLangFile {
+    var messageMap = mutableMapOf<String, Message>()
+        private set
+    var valueMap = mutableMapOf<String, String>()
+        private set
 
     companion object {
         val CODEC = BuilderCodec.builder(I18nLangFile::class.java) { I18nLangFile() }
             .append(
                 KeyedCodec("Messages", MapCodec(Message.CODEC) { mutableMapOf<String, Message>() }),
-                { o, v -> o.messageMap = v},
-                { o -> o.messageMap})
-            .add()
+                { o, v -> o.messageMap = v },
+                { o -> o.messageMap },
+            ).add()
+            .append(
+                KeyedCodec("Values", MapCodec(Codec.STRING) { mutableMapOf<String, String>() }, false),
+                { o, v -> o.valueMap = v },
+                { o -> o.valueMap },
+            ).add()
             .build()
     }
-
-    var messageMap = mutableMapOf<String, Message>()
-
 }
