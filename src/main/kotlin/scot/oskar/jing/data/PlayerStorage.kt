@@ -11,6 +11,7 @@ data class JingPlayerData (
     var homes: Array<PlayerHome> = emptyArray(),
 ) {
     companion object {
+        @JvmField
         val CODEC = BuilderCodec.builder(JingPlayerData::class.java) { JingPlayerData() }
             .append(
                 KeyedCodec("HomeData", ArrayCodec(PlayerHomeCodec) { arrayOf(PlayerHome()) }),

@@ -110,6 +110,7 @@ class I18nLangFile {
         private set
 
     companion object {
+        @JvmField
         val CODEC = BuilderCodec.builder(I18nLangFile::class.java) { I18nLangFile() }
             .append(
                 KeyedCodec("Messages", MapCodec(Message.CODEC) { mutableMapOf<String, Message>() }),

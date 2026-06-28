@@ -10,6 +10,7 @@ import scot.oskar.jing.data.PlayerId
 interface JingPlayerDataProvider {
 
     companion object {
+        @JvmField
         val CODEC = BuilderCodecMapCodec<JingPlayerDataProvider>("Type", true)
 
         /**

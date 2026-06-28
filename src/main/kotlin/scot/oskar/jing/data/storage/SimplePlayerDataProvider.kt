@@ -13,6 +13,8 @@ class SimplePlayerDataProvider : JingPlayerDataProvider {
 
     companion object {
         lateinit var basePath: Path
+
+        @JvmField
         val CODEC = BuilderCodec.builder(SimplePlayerDataProvider::class.java) { SimplePlayerDataProvider() }.build()
     }
 
