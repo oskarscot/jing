@@ -6,6 +6,7 @@ import com.hypixel.hytale.component.Component
 import com.hypixel.hytale.component.ComponentRegistryProxy
 import com.hypixel.hytale.component.ComponentType
 import com.hypixel.hytale.logger.HytaleLogger
+import com.hypixel.hytale.server.core.HytaleServer
 import com.hypixel.hytale.server.core.command.system.AbstractCommand
 import scot.oskar.jing.JingPlugin
 import scot.oskar.jing.data.AbstractHytaleServiceFactory
@@ -93,6 +94,10 @@ class ModuleService private constructor(val plugin: JingPlugin) {
 
     fun loadModules() {
         val enabledModules = plugin.pluginConfig.get().enabledModules
+        if(enabledModules.isEmpty()) {
+            logger.atSevere().log("There are no modules provided to load!")
+            return
+        }
         logger.atInfo().log("Loading ${enabledModules.count()} modules...")
         enabledModules.forEach {
             logger.atInfo().log("Loading ${it::class.simpleName}..")
