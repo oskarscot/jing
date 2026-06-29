@@ -81,12 +81,22 @@ abstract class AbstractJingModule (private val basePlugin: JingPlugin) {
 
 class ModuleService private constructor(val plugin: JingPlugin) {
 
+    val logger = HytaleLogger.forEnclosingClass()
+
     companion object Factory : AbstractHytaleServiceFactory<ModuleService>() {
         override fun create(plugin: JingPlugin): ModuleService = ModuleService(plugin)
     }
 
-    //TODO: proper module loading and test if it even works
     init {
         AbstractJingModule.registerModule(CoreJingModule(plugin)) { CoreJingModule.CODEC }
+    }
+
+    fun loadModules() {
+        val enabledModules = plugin.pluginConfig.get().enabledModules
+        logger.atInfo().log("Loading ${enabledModules.count()} modules...")
+        enabledModules.forEach {
+            logger.atInfo().log("Loading ${it::class.simpleName}..")
+            it.load()
+        }
     }
 }

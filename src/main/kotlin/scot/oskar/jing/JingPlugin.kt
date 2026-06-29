@@ -39,6 +39,8 @@ class JingPlugin(init: JavaPluginInit): JavaPlugin(init) {
         i18nService.loadAll()
         I18n.init(i18nService)
 
+        moduleService.loadModules()
+
         pluginConfig.save()
     }
 
